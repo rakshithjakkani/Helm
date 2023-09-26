@@ -1,0 +1,75 @@
+COMMANDS
+========
+* helm upgrade apache bitnami/apache -n web----> command to update the chart.
+* helm rollback apache 1 -n web-----> command to rollback to the revision 1.
+* helm uninstall apache----> command to uninstall apache.
+* helm repo list---> to list helm repos which you added
+* helm repo add <EnterNameYourWish> https://charts.bitnami.com/bitnami
+* helm search repo <package>----> package like apache, nginx, mysql and more.
+* helm search repo <package> --versions---> to get the same packages with different versions.
+* helm install apache bitnami/apache -n web----> command to install apache.
+* helm upgrade apache bitnami/apache -n web----> command to update the chart.
+* helm repo remove <GivenRepoName>------> to delete the repo.
+* helm status <GivenRepoName>----> to get the status of a package.
+* helm list (ls)---> to list the installed packages.
+* helm uninstall <PackageName>.
+* helm install <PackageName> bitnami/mysql --set auth.rootPassword=<rootPassword> ----> way to give custom values while installing the chart
+* helm install <PackageName> bitnami/mysql --values path/to/file ---> setting up the custom values using values.yaml file.
+* helm upgrade <PackageName> bitnami/mysql --values path/to/file ---> update the custom values using values.yaml file.
+* helm upgrade <PackageName> bitnami/mysql --reuse-values---> upgrade chart version but use same values that we used previously.
+* helm uninstall <PackageName> --keep-history---> to keep history remains even if we delete the chart (history will be maintained by Kubernetes via secretes).
+* helm install <PackageName> bitnami/mysql --values path/to/file/fileName.yaml --dry-run---> command to dry run. (can be used for upgrade also(helm hit kubernetes api to get present state of package))
+* helm template <PackageName> bitnami/mysql --values path/to/file/fileName.yaml---> command to Generate the yaml files without having the cluster.
+* helm get notes <ReleaseName>or<PackageName>---> to get the notes of a deployed release.
+* helm get values <ReleaseName>or<PackageName>----> to get the values of a deployed release.
+* helm get values <ReleaseName>or<PackageName> --all --revision 1---> to get the values of revision 1 
+* helm get manifest <ReleaseName>or<PackageName> --revision 1---> to get the manifest files of a revision
+* helm history <ReleaseName>or<PackageName> ---> to get the history of a package
+* helm rollback <ReleaseName>or<PackageName> <RevisionNumber(1,2,3)>---> to rollback the package.
+* helm install <ReleaseName>or<PackageName> bitnami/apache -n test --create-namespace --->to create namespace in helm installation runtime.
+* helm upgrade --install <ReleaseName>or<PackageName> bitnami/apache--> helm checks for the package is existing or not, if not then helm will install the package.
+    otherwise helm will skip the installation and upgrade the package.
+* helm install bitnami/apache --generate-name --name-template "mywebserver-{{randAlpha 7 | lower}}" --> command to generate ReleaseName>or<PackageName>
+    {{randAlpha 7 | lower}}= go templating which means that the "randAlpha" function generate random 7 alphabets with all lower case
+* helm repo update---> command to update all the repos that are present in our system. 
+* helm install <ReleaseName>or<PackageName> bitnami/apache --wait --timeout 5m30s
+* helm upgrade <ReleaseName>or<PackageName> bitnami/apache --automic --timeout 5m30s ---> if pods are not running then helm will automatically rollback to previous successful revision.
+* helm upgrade <ReleaseName>or<PackageName> bitnami/apache --automic --timeout 5m30s --force---> to delete and recreate any deployment that you modify in the values.yaml.
+* 
+
+
+
+IMPORTANT POINTS (remember)
+===========================
+* helm will maintain the revisions of a deployments like revision 1, revision 2, revision 3 and go on.
+    * for example you want to deploy a nginx web app in cluster. You installed nginx with a version of 1 (using helm).
+    * After some days to want to update nginx app with the version of 2 (using helm). You installed version 2 and it is not working as expected. So you want to go back to version 1.
+    * In the above usecase helm is the perfect solution because helm maintains Revisions.
+* When we want to deploy an app in cluster, we have to write deployment, service, configmaps and ingress manifest files. 
+    * To pass the values dynamically in manifest file we use "values.yaml" in helm.
+* bitnami.com/stacks/helm----> this is the place to find number of helm charts. 
+* github.com/bitnami/stacks/
+* The installation repo name should be uniq.(<EnterNameYourWish>) 
+* Helm maintains the Revisions via Kubernetes secretes. 
+    * when we install the helm package, go and check the secrets in Kubernetes. There should secrete for each revision.
+    * while uninstalling the helm package the secretes will also delete in the cluster.
+    * when we want to delete chart but keep the chart history, use --keep-history flage.
+* when we do "hem get, helm ls" the output of that commands are coming from the kubernetes secretes.
+* When kubernetes receives manifest from the helm, then helm will consider it as package is deployed and mark it as deployed without considering of pod status
+    if pod is in peding crashloopbackoff helm will not consider. If you want to mark deployed, when pod is in up and runnig then use 
+    "--wait"(by default 5m) in installation command. if you want to increase timeout more than that, "--timeout 5m30s" 
+* When you upgrade helm package helm would't restart the container, it just modify the container. To delete the deployment and recreate use 
+    "--force" flage
+
+HELM RELEASE WORKFLOW
+======================
+* Load the chart and dependencies 
+    * helm go and check the repo and load the charts and yaml and template files and pull them.
+* Parse the values.yaml
+    * passes values to template files(service, deployment manifest files) using the values.yaml file.
+* Generate the yaml
+    * Generate the manifest files by using the values.yaml file 
+* Parse the yaml to kube objects and validate
+    * Make the manifest file executable and syntax check and all. 
+* Generate yaml and send to Kubernetes.
+    * Generate the actual manifest file and handover to the Kubernetes cluster.
